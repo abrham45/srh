@@ -1,0 +1,26 @@
+version: '3.8'
+
+services:
+  # Django Application Service
+  web:
+    build: .
+    environment:
+      - DJANGO_SETTINGS_MODULE=config.settings
+      - TELEGRAM_TOKEN=${TELEGRAM_TOKEN:-8298399296:AAFOLSYLmZbpjevykwiXt7jCCRra8TNnx2s}
+      - GEMINI_API_KEY=${GEMINI_API_KEY:-AIzaSyAE9971K7sOniZHZzhrK_dQEzX-RpkpQ84}
+      - GEMINI_API_URL=${GEMINI_API_URL:-https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent}
+      # Connect to host PostgreSQL
+      - DB_HOST=host.docker.internal
+      - DB_PORT=5432
+      - DB_NAME=srh_chatbot_db
+      - DB_USER=postgres
+      - DB_PASSWORD=1234
+    volumes:
+      - ./logs:/app/logs
+    ports:
+      - "8000:8000"
+    restart: unless-stopped
+    command: python manage.py run_telegram_bot
+    # Use host networking to access local PostgreSQL
+    extra_hosts:
+      - "host.docker.internal:host-gateway" 

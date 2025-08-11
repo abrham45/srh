@@ -1,0 +1,121 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database Service
+  postgres:
+    image: postgres:15-alpine
+    container_name: srh-chatbot-postgres
+    environment:
+      - POSTGRES_DB=srh_chatbot_db
+      - POSTGRES_USER=srhbot
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - POSTGRES_HOST_AUTH_METHOD=md5
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./backups:/backups
+    ports:
+      - "127.0.0.1:5432:5432"  # Only accessible from localhost
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U srhbot -d srh_chatbot_db"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - srh-network
+
+  # Redis Cache Service  
+  redis:
+    image: redis:7-alpine
+    container_name: srh-chatbot-redis
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - srh-network
+
+  # SRH Chatbot Web Service
+  web:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    image: srh-chatbot:latest
+    container_name: srh-chatbot-web
+    env_file:
+      - .env.production
+    environment:
+      - DJANGO_SETTINGS_MODULE=config.settings
+      - DB_HOST=postgres  # Connect to Docker PostgreSQL
+      - REDIS_URL=redis://redis:6379/1
+    volumes:
+      - ./logs:/app/logs
+      - ./data:/app/data
+      - ./backups:/app/backups
+    ports:
+      - "8000:8000"
+    restart: unless-stopped
+    command: python manage.py run_telegram_bot
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "manage.py", "check", "--deploy"]
+      interval: 60s
+      timeout: 30s
+      retries: 3
+      start_period: 60s  # Wait longer for DB to be ready
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "5"
+    networks:
+      - srh-network
+
+  # Database backup service
+  backup:
+    image: postgres:15-alpine
+    container_name: srh-chatbot-backup
+    volumes:
+      - postgres_data:/var/lib/postgresql/data:ro
+      - ./backups:/backups
+    environment:
+      - PGPASSWORD=${DB_PASSWORD}
+    command: |
+      sh -c '
+      while true; do
+        echo "Waiting for next backup cycle..."
+        sleep 86400  # 24 hours
+        echo "Starting database backup..."
+        pg_dump -h postgres -U srhbot -d srh_chatbot_db > /backups/srh_chatbot_$$(date +%Y%m%d_%H%M%S).sql
+        echo "Backup completed: $$(date)"
+        # Keep only last 7 days of backups
+        find /backups -name "*.sql" -mtime +7 -delete
+      done'
+    restart: unless-stopped
+    depends_on:
+      - postgres
+    networks:
+      - srh-network
+    profiles:
+      - backup
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+
+networks:
+  srh-network:
+    driver: bridge
