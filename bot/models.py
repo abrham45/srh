@@ -88,6 +88,26 @@ RISK_LEVEL_CHOICES = [
     ('NEUTRAL', 'No Risk Detected', 'አደጋ አልተገኘም'),
 ]
 
+MYTH_DETECTION_CHOICES = [
+    # Cultural/Traditional Myths
+    ('CULTURAL_HYMEN', 'Hymen/Virginity Myths', 'የባክነት/ቅድስና አፈታሪኮች'),
+    ('CULTURAL_MENSTRUATION', 'Menstrual Cultural Myths', 'የወር አበባ ባህላዊ አፈታሪኮች'),
+    ('CULTURAL_FERTILITY', 'Fertility/Infertility Myths', 'የመውለድ አቅም አፈታሪኮች'),
+    ('CULTURAL_PREGNANCY', 'Pregnancy Cultural Beliefs', 'የእርግዝና ባህላዊ እምነቶች'),
+    ('CULTURAL_CONTRACEPTION', 'Contraception Cultural Myths', 'የወሊድ መቆጣጠሪያ ባህላዊ አፈታሪኮች'),
+    
+    # Medical Misconceptions
+    ('MEDICAL_CONTRACEPTION', 'Contraception Medical Misconceptions', 'የወሊድ መቆጣጠሪያ ሕክምናዊ ስህተቶች'),
+    ('MEDICAL_STI', 'STI/HIV Medical Misconceptions', 'የSTI/HIV ሕክምናዊ ስህተቶች'),
+    ('MEDICAL_PREGNANCY', 'Pregnancy Medical Misconceptions', 'የእርግዝና ሕክምናዊ ስህተቶች'),
+    ('MEDICAL_ANATOMY', 'Anatomy/Biology Misconceptions', 'የሰውነት አቀማመጥ ሕክምናዊ ስህተቶች'),
+    ('MEDICAL_PUBERTY', 'Puberty Medical Misconceptions', 'የእድሜ ብስለት ሕክምናዊ ስህተቶች'),
+    ('MEDICAL_MENSTRUATION', 'Menstruation Medical Misconceptions', 'የወር አበባ ሕክምናዊ ስህተቶች'),
+    
+    # No myth detected
+    ('NO_MYTH', 'No Myth Detected', 'አፈታሪክ አልተገኘም'),
+]
+
 class UserSession(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     telegram_user_id = models.BigIntegerField(db_index=True)
@@ -224,5 +244,66 @@ class RiskAssessment(models.Model):
                 severity_text = " (Low Severity)"
         
         return f"{risk_label}{severity_text}"
+
+class MythAssessment(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    session = models.ForeignKey(UserSession, on_delete=models.CASCADE, related_name='myth_assessments')
+    message = models.ForeignKey(ChatMessage, on_delete=models.CASCADE, related_name='myth_assessments')
+    myth_type = models.CharField(
+        max_length=32,
+        choices=[(x[0], x[1]) for x in MYTH_DETECTION_CHOICES],
+        help_text="The type of myth or misconception detected"
+    )
+    confidence_score = models.FloatField(null=True, blank=True, help_text="AI confidence in myth detection (0-1)")
+    myth_detected = models.BooleanField(default=False, help_text="Whether any myth/misconception was detected")
+    specific_myth = models.TextField(null=True, blank=True, help_text="Description of the specific myth detected")
+    correction_provided = models.BooleanField(default=False, help_text="Whether correction was provided in response")
+    severity_level = models.CharField(
+        max_length=16,
+        choices=[
+            ('LOW', 'Low Impact'),
+            ('MEDIUM', 'Medium Impact'), 
+            ('HIGH', 'High Impact'),
+            ('CRITICAL', 'Critical - Potentially Dangerous')
+        ],
+        null=True,
+        blank=True,
+        help_text="Severity of the misinformation impact"
+    )
+    analysis_context = models.JSONField(null=True, blank=True, help_text="Context data used for myth detection")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['session', '-created_at']),
+            models.Index(fields=['myth_type']),
+            models.Index(fields=['myth_detected']),
+            models.Index(fields=['severity_level']),
+        ]
+
+    def __str__(self):
+        return f"{self.session.telegram_user_id} - {self.myth_type} ({self.created_at.strftime('%Y-%m-%d %H:%M')})"
+
+    def get_myth_summary(self):
+        """Return a summary of the myth assessment"""
+        if not self.myth_detected:
+            return "No myth detected"
+        
+        myth_label = next((label for code, label, _ in MYTH_DETECTION_CHOICES if code == self.myth_type), self.myth_type)
+        
+        severity_text = ""
+        if self.severity_level:
+            severity_text = f" ({self.severity_level.title()} Impact)"
+        
+        return f"{myth_label}{severity_text}"
+
+    def is_cultural_myth(self):
+        """Check if this is a cultural/traditional myth"""
+        return self.myth_type.startswith('CULTURAL_')
+    
+    def is_medical_misconception(self):
+        """Check if this is a medical misconception"""
+        return self.myth_type.startswith('MEDICAL_')
 
 

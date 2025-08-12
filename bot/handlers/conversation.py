@@ -11,6 +11,7 @@ from bot.gemini_api import ask_gemini
 from bot.intent_classification import perform_intent_classification
 from bot.emotion_detection import perform_emotion_detection
 from bot.risk_assessment import perform_risk_assessment
+from bot.myth_detection import perform_myth_detection
 
 logger = logging.getLogger(__name__)
 
@@ -561,6 +562,15 @@ async def handle_question(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 logger.debug(f"Started risk assessment task for session {session.id}")
             except Exception as e:
                 logger.warning(f"Failed to start risk assessment: {e}")
+            
+            # Perform myth detection every 2 messages starting from 2nd (runs in background)
+            try:
+                myth_task = perform_myth_detection(session, num_questions)
+                # Don't await this to avoid blocking the user response
+                asyncio.create_task(myth_task)
+                logger.debug(f"Started myth detection task for session {session.id}")
+            except Exception as e:
+                logger.warning(f"Failed to start myth detection: {e}")
             
             if should_ask_feedback(num_questions):
                 rating_keyboard = [
