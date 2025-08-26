@@ -150,5 +150,27 @@ async def build_gemini_context(session, chat_history=None):
             
         for msg in chat_history:
             base_context += f"{msg.sender}: {msg.message}\n"
+        
+        # Add conversation continuation guidance
+        if lang == 'am':
+            base_context += (
+                "\n⚠️ አስፈላጊ: ይህ ቀጣይ ውይይት ነው። ሰላምታ (ሰላም) እንደገና አይበሉ። "
+                "ከላይ ያለውን ውይይት ይቀጥሉ እና ይመልሱ።\n"
+            )
+        else:
+            base_context += (
+                "\n⚠️ IMPORTANT: This is a continuing conversation. Do NOT greet again with 'Hello' or similar. "
+                "Continue the conversation naturally based on the chat history above.\n"
+            )
+    else:
+        # First interaction - greeting is appropriate
+        if lang == 'am':
+            base_context += (
+                "\n⚠️ ማስታወሻ: ይህ የመጀመሪያ ውይይት ነው። ተገቢ ሰላምታ መስጠት ይቻላል።\n"
+            )
+        else:
+            base_context += (
+                "\n⚠️ NOTE: This is the first interaction. A greeting is appropriate.\n"
+            )
 
     return base_context

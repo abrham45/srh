@@ -15,6 +15,11 @@ from bot.myth_detection import perform_myth_detection
 
 logger = logging.getLogger(__name__)
 
+# Configuration constants
+CHAT_HISTORY_LIMIT = 20  # Number of recent messages to include in context (10 user + 10 bot)
+# Increased from 4 to 20 for much better conversation memory
+# This allows the bot to remember and reference much more context
+
 STATE_QUESTION = "question"
 STATE_FEEDBACK = "feedback"
 STATE_LANGUAGE = "language"
@@ -164,7 +169,7 @@ async def show_faq_sections(update, context, lang):
         "contraception": {"en": "🛡️ Contraception & Birth Control", "am": "🛡️ ወሊድ መከላከያ"},
         "sti": {"en": "🦠 STIs & Sexual Health", "am": "🦠 ጾታዊ ተላላፊ በሽታዎች"},
         "puberty": {"en": "🌱 Puberty & Development", "am": "🌱 የአካል እድገት"},
-        "relationships": {"en": "💕 Relationships & Sexuality", "am": "💕 ግንኙነት እና ጾታዊነት"}
+        "relationships": {"en": "💕 Relationships & Sexuality", "am": "💕 የፍቅር ግንኙነት"}
     }
     
     for section_id in FAQ_CATEGORIES:
@@ -198,7 +203,7 @@ async def show_section_qa(update, context, section_id, lang):
         "contraception": {"en": "🛡️ Contraception & Birth Control", "am": "🛡️ ወሊድ መከላከያ"},
         "sti": {"en": "🦠 STIs & Sexual Health", "am": "🦠 ጾታዊ ተላላፊ በሽታዎች"},
         "puberty": {"en": "🌱 Puberty & Development", "am": "🌱 የአካል እድገት"},
-        "relationships": {"en": "💕 Relationships & Sexuality", "am": "💕 ግንኙነት እና ጾታዊነት"}
+        "relationships": {"en": "💕 Relationships & Sexuality", "am": "💕 የፍቅር ግንኙነት"}
     }
     
     section_name = section_titles.get(section_id, {}).get(lang, "FAQ")
@@ -272,7 +277,7 @@ async def show_faq_sections_callback(query, context, lang):
         "contraception": {"en": "🛡️ Contraception & Birth Control", "am": "🛡️ ወሊድ መከላከያ"},
         "sti": {"en": "🦠 STIs & Sexual Health", "am": "🦠 ጾታዊ ተላላፊ በሽታዎች"},
         "puberty": {"en": "🌱 Puberty & Development", "am": "🌱 የአካል እድገት"},
-        "relationships": {"en": "💕 Relationships & Sexuality", "am": "💕 ግንኙነት እና ጾታዊነት"}
+        "relationships": {"en": "💕 Relationships & Sexuality", "am": "💕 የፍቅር ግንኙነት"}
     }
     
     for section_id in FAQ_CATEGORIES:
@@ -304,8 +309,10 @@ def save_bot_message(session, text, lang, context_json=None):
     )
 
 @sync_to_async
-def get_recent_chat_history(session, limit=4):
+def get_recent_chat_history(session, limit=CHAT_HISTORY_LIMIT):
     # Use select_related to optimize database queries
+    # Increased limit from 4 to 20 for much better conversation memory
+    # This gives the bot context of last 10 user questions + 10 bot responses
     return list(ChatMessage.objects.filter(session=session)
                 .select_related('session')
                 .order_by('-timestamp')[:limit][::-1])
@@ -497,8 +504,8 @@ async def handle_question(update: Update, context: ContextTypes.DEFAULT_TYPE):
             }
             
             response_guidelines = {
-                'en': "⚠️ CONTEXTUAL ENGAGEMENT: Keep answers moderate length (4-5 sentences), supportive and encouraging. End with ONE simple, relevant question based on context to keep conversation engaging. Never ask multiple questions - only ONE question per response.",
-                'am': "⚠️ ባውድ ላይ የተመሰረተ መሳተፍ: መልሶችን መጠነኛ ርዝመት (4-5 ዓረፍተ ነገር)፣ ድጋፋዊ እና አበረታች ያድርጉ። በአውድ ላይ በመመስረት ንግግሩን አሳታፊ ለማድረግ አንድ ቀላል እና ተዛማጅ ጥያቄ በመጨረስ ያጠናቅቁ። ብዙ ጥያቄዎችን አይጠይቁ - በአንድ ምላሽ ውስጥ አንድ ጥያቄ ብቻ።"
+                'en': "⚠️ CONTEXTUAL ENGAGEMENT: Keep answers moderate length (4-5 sentences), supportive and encouraging. Continue the conversation naturally without unnecessary greetings. End with ONE simple, relevant question based on context to keep conversation engaging. Never ask multiple questions - only ONE question per response.",
+                'am': "⚠️ ባውድ ላይ የተመሰረተ መሳተፍ: መልሶችን መጠነኛ ርዝመት (4-5 ዓረፍተ ነገር)፣ ድጋፋዊ እና አበረታች ያድርጉ። ቀጣይ ውይይት ሲሆን ሰላምታ አይድገሙ። በአውድ ላይ በመመስረት ንግግሩን አሳታፊ ለማድረግ አንድ ቀላል እና ተዛማጅ ጥያቄ በመጨረስ ያጠናቅቁ። ብዙ ጥያቄዎችን አይጠይቁ - በአንድ ምላሽ ውስጥ አንድ ጥያቄ ብቻ።"
             }
             
             ethiopian_context = {

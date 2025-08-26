@@ -140,7 +140,9 @@ def save_bot_message(session, text, lang, context_json=None):
     )
 
 @sync_to_async
-def get_recent_chat_history(session, limit=4):
+def get_recent_chat_history(session, limit=20):
+    # Increased limit from 4 to 20 for much better conversation memory
+    # This gives the bot context of last 10 user questions + 10 bot responses
     return list(ChatMessage.objects.filter(session=session).order_by('-timestamp')[:limit][::-1])
 
 @sync_to_async
