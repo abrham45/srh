@@ -173,7 +173,7 @@ async def show_faq_sections(update, context, lang):
             keyboard.append([InlineKeyboardButton(section_name, callback_data=f"FAQ_SECTION|{section_id}")])
     
     # Add back to menu button
-    back_text = {"en": "🔙 Back to Menu", "am": "🔙 ወደ ምናሌ ተመለስ"}
+    back_text = {"en": "🔙 Back to Menu", "am": "🔙 ወደ ማውጫ ተመለስ"}
     keyboard.append([InlineKeyboardButton(back_text[lang], callback_data="FAQ_BACK_TO_MENU")])
     
     await update.message.reply_text(
@@ -213,7 +213,7 @@ async def show_section_qa(update, context, section_id, lang):
     # Create navigation
     keyboard = []
     back_to_topics_text = {"en": "🔙 Back to Topics", "am": "🔙 ወደ ርዕሶች ተመለስ"}
-    back_to_menu_text = {"en": "🏠 Main Menu", "am": "🏠 ዋና ምናሌ"}
+    back_to_menu_text = {"en": "🏠 Main Menu", "am": "🏠 ዋና ማውጫ"}
     
     keyboard.append([InlineKeyboardButton(back_to_topics_text[lang], callback_data="FAQ_BACK_TO_SECTIONS")])
     keyboard.append([InlineKeyboardButton(back_to_menu_text[lang], callback_data="FAQ_BACK_TO_MENU")])
@@ -236,7 +236,7 @@ async def handle_faq_callback(update: Update, context: ContextTypes.DEFAULT_TYPE
     
     if data == "FAQ_BACK_TO_MENU":
         # Go back to main menu
-        menu_msg = {"en": "Back to main menu:", "am": "ወደ ዋናው ምናሌ:"}
+        menu_msg = {"en": "Back to main menu:", "am": "ወደ ዋናው ማውጫ:"}
         await query.edit_message_text(menu_msg[lang])
         await context.bot.send_message(
             chat_id=telegram_id,
@@ -281,7 +281,7 @@ async def show_faq_sections_callback(query, context, lang):
             keyboard.append([InlineKeyboardButton(section_name, callback_data=f"FAQ_SECTION|{section_id}")])
     
     # Add back to menu button
-    back_text = {"en": "🔙 Back to Menu", "am": "🔙 ወደ ምናሌ ተመለስ"}
+    back_text = {"en": "🔙 Back to Menu", "am": "🔙 ወደ ማውጫ ተመለስ"}
     keyboard.append([InlineKeyboardButton(back_text[lang], callback_data="FAQ_BACK_TO_MENU")])
     
     await query.edit_message_text(
@@ -410,7 +410,7 @@ async def handle_question(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 "Use 'Settings' to change your profile, or 'End Chat' to clear your data."
             ),
             "am": (
-                "👋 ይህ የSRH እርዳታ ቦት ነው። ጥያቄዎን ያብሩ ወይም ከምናሌው ውስጥ ይምረጡ።\n\n"
+                "👋 ይህ የSRH እርዳታ ቦት ነው። ጥያቄዎን ያብሩ ወይም ከማውጫው ውስጥ ይምረጡ።\n\n"
                 "'ቅንብር' የሚለውን መገለጫዎን ለመቀየር፣ 'ውይይት ያቁሙ' የሚለውን ውሂብዎን ለመሰረዝ ይጠቀሙ።"
             )
         }
