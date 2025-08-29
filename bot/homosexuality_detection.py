@@ -34,17 +34,35 @@ async def is_homosexual_question_ai(question: str, user_gender: str, language: s
         homosexual_targets = "females, women, girls, ladies"
         heterosexual_targets = "males, men, boys, guys"
     
+    # Simple classification prompt
+    if user_gender == 'M':
+        same_gender_words = ["man", "men", "male", "boy", "guy"]
+        opposite_gender_words = ["woman", "women", "female", "girl", "lady"]
+    else:
+        same_gender_words = ["woman", "women", "female", "girl", "lady"]
+        opposite_gender_words = ["man", "men", "male", "boy", "guy"]
+    
     classification_prompt = f"""
 Question: "{question}"
 User: {user_gender_text}
 
-Rules:
-1. If this {user_gender_text} is asking about sexual/romantic attraction to {homosexual_targets}: Answer HOMOSEXUAL
-2. If this {user_gender_text} is asking about sexual/romantic attraction to {heterosexual_targets}: Answer NOT_HOMOSEXUAL
-3. If this is about general health, contraception, family planning, pregnancy: Answer NOT_HOMOSEXUAL
-4. If this asks about homosexuality as a concept: Answer HOMOSEXUAL
+Is this {user_gender_text} asking for sexual/romantic attraction to their own gender?
 
-Answer ONLY with: HOMOSEXUAL or NOT_HOMOSEXUAL"""
+Check:
+- Does question mention sex, sexual attraction, or romance?
+- Does it mention {', '.join(same_gender_words)}?
+- Is it about personal desire/attraction?
+
+If YES to all three: Answer HOMOSEXUAL
+If NO to any: Answer NOT_HOMOSEXUAL
+
+Examples:
+- "{user_gender_text} wants sex with {same_gender_words[0]}" = HOMOSEXUAL
+- "{user_gender_text} wants sex with {opposite_gender_words[0]}" = NOT_HOMOSEXUAL
+- "What is family planning?" = NOT_HOMOSEXUAL
+- "Hello" = NOT_HOMOSEXUAL
+
+Answer:"""
 
     try:
         # Ask AI to classify the question
