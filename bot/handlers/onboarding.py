@@ -173,74 +173,82 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await set_interest_area(session, interest_code)
         lang = session.language
         
-        # Show manual region selection with better layout
-        region_keyboard = []
-        
-        # Add "Auto-detect" option first
-        auto_detect_text = {
-            "en": "🌍 Auto-detect my location", 
-            "am": "🌍 ቦታዬን በራሱ ይለይ"
+        # Try automatic location detection first
+        detecting_message = {
+            "en": "🌍 Detecting your location...",
+            "am": "🌍 ቦታዎን እየለየን ነው..."
         }
-        region_keyboard.append([InlineKeyboardButton(auto_detect_text[lang], callback_data="REGION|AUTO_DETECT")])
+        await query.edit_message_text(detecting_message[lang])
         
-        # Add regions in pairs for better layout
-        region_choices = choices_for_buttons(REGIONS, lang)
-        for i in range(0, len(region_choices), 2):
-            row = []
-            for j in range(2):
-                if i + j < len(region_choices):
-                    label, code = region_choices[i + j]
-                    # Truncate long region names for better display
-                    display_label = label if len(label) <= 25 else label[:22] + "..."
-                    row.append(InlineKeyboardButton(display_label, callback_data=f"REGION|{code}"))
-            region_keyboard.append(row)
-        
-        await query.edit_message_text(
-            LOCATION_CHOICE_PROMPT[lang],
-            reply_markup=InlineKeyboardMarkup(region_keyboard)
-        )
-        context.user_data['state'] = STATE_REGION
-        return
+        try:
+            from bot.auto_location import detect_user_location
+            latitude, longitude, country, detected_region_code = await detect_user_location()
+            await set_location_and_region(session, latitude, longitude, detected_region_code)
+            
+            # Auto-detection successful - show completion
+            from bot.choices import get_choice_label
+            detected_region_name = get_choice_label(REGIONS, detected_region_code, lang)
+            auto_detect_success = {
+                "en": f"📍 Location detected: {detected_region_name}\n\nThank you! What is your question for today?",
+                "am": f"📍 ቦታዎ ተለይቷል: {detected_region_name}\n\nአመሰግናለሁ! አሁን ጥያቄዎን ሊጠይቁኝ ይችላሉ።"
+            }
+            await query.edit_message_text(auto_detect_success[lang])
+            
+            # Send menu keyboard and complete onboarding
+            telegram_id = query.from_user.id
+            await context.bot.send_message(
+                chat_id=telegram_id,
+                text="....",
+                reply_markup=ReplyKeyboardMarkup(MENU_BTNS[lang], resize_keyboard=True, one_time_keyboard=False)
+            )
+            context.user_data['state'] = STATE_QUESTION
+            return
+            
+        except Exception as e:
+            # Auto-detection failed - show manual region selection
+            logger.error(f"Auto-detection failed: {e}")
+            
+            fallback_message = {
+                "en": "🔍 Couldn't detect your location automatically.\n\nPlease select your region manually:",
+                "am": "🔍 ቦታዎን በራሱ መለየት አልተቻለም።\n\nእባክዎን ክልልዎን በራስዎ ይምረጡ:"
+            }
+            
+            # Show manual region selection
+            region_keyboard = []
+            region_choices = choices_for_buttons(REGIONS, lang)
+            for i in range(0, len(region_choices), 2):
+                row = []
+                for j in range(2):
+                    if i + j < len(region_choices):
+                        label, code = region_choices[i + j]
+                        # Truncate long region names for better display
+                        display_label = label if len(label) <= 25 else label[:22] + "..."
+                        row.append(InlineKeyboardButton(display_label, callback_data=f"REGION|{code}"))
+                region_keyboard.append(row)
+            
+            await query.edit_message_text(
+                fallback_message[lang],
+                reply_markup=InlineKeyboardMarkup(region_keyboard)
+            )
+            context.user_data['state'] = STATE_REGION
+            return
 
     if data.startswith("REGION|") and state == STATE_REGION:
         region_code = data.split("|")[1]
         lang = session.language
         
-        if region_code == "AUTO_DETECT":
-            # Try automatic location detection
-            try:
-                from bot.auto_location import detect_user_location
-                latitude, longitude, country, detected_region_code = await detect_user_location()
-                await set_location_and_region(session, latitude, longitude, detected_region_code)
-                
-                # Show auto-detected region confirmation
-                from bot.choices import get_choice_label
-                detected_region_name = get_choice_label(REGIONS, detected_region_code, lang)
-                auto_detect_success = {
-                    "en": f"📍 Auto-detected: {detected_region_name}\n\nThank you! What is your question for today?",
-                    "am": f"📍 በራሱ ተለይቷል: {detected_region_name}\n\nአመሰግናለሁ! አሁን ጥያቄዎን ሊጠይቁኝ ይችላሉ።"
-                }
-                await query.edit_message_text(auto_detect_success[lang])
-            except Exception as e:
-                # Auto-detection failed, fallback to Addis Ababa
-                logger.error(f"Auto-detection failed: {e}")
-                await set_location_and_region(session, 9.0307, 38.7407, 'ADDIS_ABABA')
-                auto_detect_fallback = {
-                    "en": "📍 Auto-detection unavailable, defaulted to Addis Ababa\n\nThank you! What is your question for today?",
-                    "am": "📍 በራሱ መለየት አልተቻለም፣ ወደ አዲስ አበባ ተቀምጧል\n\nአመሰግናለሁ! አሁን ጥያቄዎን ሊጠይቁኝ ይችላሉ።"
-                }
-                await query.edit_message_text(auto_detect_fallback[lang])
-        else:
-            # Manual region selection
-            await set_region(session, region_code)
-            # Set default coordinates for the selected region (you can improve this later)
-            await set_location_and_region(session, 9.0307, 38.7407, region_code)
-            
-            completion_message = {
-                "en": "Thank you! What is your question for today?",
-                "am": "አመሰግናለሁ! አሁን ጥያቄዎን ሊጠይቁኝ ይችላሉ።"
-            }
-            await query.edit_message_text(completion_message[lang])
+        # Manual region selection (this is only reached when auto-detection failed)
+        await set_region(session, region_code)
+        # Set default coordinates for the selected region (you can improve this later)
+        await set_location_and_region(session, 9.0307, 38.7407, region_code)
+        
+        from bot.choices import get_choice_label
+        selected_region_name = get_choice_label(REGIONS, region_code, lang)
+        completion_message = {
+            "en": f"✅ Selected: {selected_region_name}\n\nThank you! What is your question for today?",
+            "am": f"✅ ተመርጧል: {selected_region_name}\n\nአመሰግናለሁ! አሁን ጥያቄዎን ሊጠይቁኝ ይችላሉ።"
+        }
+        await query.edit_message_text(completion_message[lang])
         
         # Send menu keyboard
         telegram_id = query.from_user.id
