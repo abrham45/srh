@@ -10,13 +10,13 @@ services:
       - GEMINI_API_KEY=${GEMINI_API_KEY:-AIzaSyAE9971K7sOniZHZzhrK_dQEzX-RpkpQ84}
       - GEMINI_API_URL=${GEMINI_API_URL:-https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent}
       # Connect to host PostgreSQL
-      - DB_HOST=host.docker.internal
+      - DB_HOST=164.92.98.189
       - DB_PORT=5432
-      - DB_NAME=srh_chatbot_db
-      - DB_USER=postgres
+      - DB_NAME=srh
+      - DB_USER=abrham
       - DB_PASSWORD=1234
     volumes:
-      - ./logs:/app/logs
+      - ./logs:/app/log
     ports:
       - "8000:8000"
     restart: unless-stopped

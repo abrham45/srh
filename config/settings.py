@@ -67,10 +67,10 @@ import os
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.getenv('DB_NAME', 'srh_chatbot_db'),
-        'USER': os.getenv('DB_USER', 'postgres'),
+        'NAME': os.getenv('DB_NAME', 'srh'),
+        'USER': os.getenv('DB_USER', 'abrham'),
         'PASSWORD': os.getenv('DB_PASSWORD', '1234'),
-        'HOST': os.getenv('DB_HOST', 'localhost'),
+        'HOST': os.getenv('DB_HOST', '164.92.98.189'),
         'PORT': os.getenv('DB_PORT', '5432'),
         # Connection persistence for better concurrent performance
         'CONN_MAX_AGE': 60,  # Keep connections alive for 60 seconds
