@@ -173,26 +173,18 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await set_interest_area(session, interest_code)
         lang = session.language
         
-        # Try automatic location detection first
-        detecting_message = {
-            "en": "🌍 Detecting your location...",
-            "am": "🌍 ቦታዎን እየለየን ነው..."
-        }
-        await query.edit_message_text(detecting_message[lang])
-        
+        # Try automatic location detection silently in background
         try:
             from bot.auto_location import detect_user_location
             latitude, longitude, country, detected_region_code = await detect_user_location()
             await set_location_and_region(session, latitude, longitude, detected_region_code)
             
-            # Auto-detection successful - show completion
-            from bot.choices import get_choice_label
-            detected_region_name = get_choice_label(REGIONS, detected_region_code, lang)
-            auto_detect_success = {
-                "en": f"📍 Location detected: {detected_region_name}\n\nThank you! What is your question for today?",
-                "am": f"📍 ቦታዎ ተለይቷል: {detected_region_name}\n\nአመሰግናለሁ! አሁን ጥያቄዎን ሊጠይቁኝ ይችላሉ።"
+            # Auto-detection successful - proceed directly without mentioning detection
+            completion_message = {
+                "en": "Thank you! What is your question for today?",
+                "am": "አመሰግናለሁ! አሁን ጥያቄዎን ሊጠይቁኝ ይችላሉ።"
             }
-            await query.edit_message_text(auto_detect_success[lang])
+            await query.edit_message_text(completion_message[lang])
             
             # Send menu keyboard and complete onboarding
             telegram_id = query.from_user.id
@@ -205,12 +197,12 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
             return
             
         except Exception as e:
-            # Auto-detection failed - show manual region selection
+            # Auto-detection failed silently - show manual region selection without mentioning the failure
             logger.error(f"Auto-detection failed: {e}")
             
             fallback_message = {
-                "en": "🔍 Couldn't detect your location automatically.\n\nPlease select your region manually:",
-                "am": "🔍 ቦታዎን በራሱ መለየት አልተቻለም።\n\nእባክዎን ክልልዎን በራስዎ ይምረጡ:"
+                "en": "Finally, which region of Ethiopia are you in? This helps us provide region-specific health resources.",
+                "am": "በመጨረሻ፣ በኢትዮጵያ የትኛው ክልል ውስጥ ይገኛሉ? ይህ ለክልልዎ ተስማሚ የጤና መረጃዎችን እንድንሰጥዎ ይረዳናል።"
             }
             
             # Show manual region selection
