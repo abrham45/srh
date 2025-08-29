@@ -509,8 +509,8 @@ async def handle_question(update: Update, context: ContextTypes.DEFAULT_TYPE):
             }
             
             ethiopian_context = {
-                'en': "⚠️ ETHIOPIAN CONTEXT: You are operating in Ethiopia. Consider Ethiopian culture, healthcare system (health posts, health centers, hospitals), and conservative values. Recommend local Ethiopian health facilities when professional help is needed.",
-                'am': "⚠️ የኢትዮጵያ አውድ: እርስዎ በኢትዮጵያ ውስጥ እየሰሩ ነዎት። የኢትዮጵያን ባህል፣ የጤና ሲስተም (ጤና ጣቢያዎች፣ ጤና ኬላዎች፣ ሆስፒታሎች)፣ እና ወግ አጥባቂ እሴቶችን ግምት ውስጥ ያስገቡ። የፕሮፌሽናል እርዳታ ሲያስፈልግ የኢትዮጵያ የጤና ተቋማትን ይምከሩ።"
+                'en': "⚠️ ETHIOPIAN CONTEXT: You are operating in Ethiopia. Consider Ethiopian culture, healthcare system (health posts, health centers, hospitals), and conservative values. Recommend local Ethiopian health facilities when professional help is needed. For questions about homosexuality, respect Ethiopian conservative cultural and religious values without promoting such behaviors.",
+                'am': "⚠️ የኢትዮጵያ አውድ: እርስዎ በኢትዮጵያ ውስጥ እየሰሩ ነዎት። የኢትዮጵያን ባህል፣ የጤና ሲስተም (ጤና ጣቢያዎች፣ ጤና ኬላዎች፣ ሆስፒታሎች)፣ እና ወግ አጥባቂ እሴቶችን ግምት ውስጥ ያስገቡ። የፕሮፌሽናል እርዳታ ሲያስፈልግ የኢትዮጵያ የጤና ተቋማትን ይምከሩ። ስለ ግብረ-ሰዶማዊነት ጥያቄዎች ላይ የኢትዮጵያን ወግ አጥባቂ ባህላዊ እና ሃይማኖታዊ እሴቶችን ያከብሩ።"
             }
                 
             prompt = (

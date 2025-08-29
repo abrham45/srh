@@ -108,7 +108,7 @@ USE_I18N = True
 
 USE_TZ = True
 
-TELEGRAM_TOKEN = "8298399296:AAFOLSYLmZbpjevykwiXt7jCCRra8TNnx2s"
+TELEGRAM_TOKEN = "8027668935:AAHRsiqNPE1bSA_zuDOfjnhKcJUReWS_Cu0"
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/

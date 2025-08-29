@@ -6,7 +6,7 @@ services:
     build: .
     environment:
       - DJANGO_SETTINGS_MODULE=config.settings
-      - TELEGRAM_TOKEN=${TELEGRAM_TOKEN:-8298399296:AAFOLSYLmZbpjevykwiXt7jCCRra8TNnx2s}
+      - TELEGRAM_TOKEN=${TELEGRAM_TOKEN:-8027668935:AAHRsiqNPE1bSA_zuDOfjnhKcJUReWS_Cu0}
       - GEMINI_API_KEY=${GEMINI_API_KEY:-AIzaSyAE9971K7sOniZHZzhrK_dQEzX-RpkpQ84}
       - GEMINI_API_URL=${GEMINI_API_URL:-https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent}
       # Connect to host PostgreSQL
