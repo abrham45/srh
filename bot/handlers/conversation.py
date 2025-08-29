@@ -12,7 +12,7 @@ from bot.intent_classification import perform_intent_classification
 from bot.emotion_detection import perform_emotion_detection
 from bot.risk_assessment import perform_risk_assessment
 from bot.myth_detection import perform_myth_detection
-from bot.homosexuality_filter import is_homosexual_question, get_rejection_response
+from bot.homosexuality_detection import is_homosexual_question_ai, get_rejection_response
 
 logger = logging.getLogger(__name__)
 
@@ -466,15 +466,21 @@ async def handle_question(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if state == STATE_QUESTION:
         user_question = user_input
         
-        # Check if question is about homosexuality and reject if so
+        # Check if question is about homosexuality using AI and reject if so
         user_gender = getattr(session, 'gender', None)
-        if user_gender and is_homosexual_question(user_question, user_gender, lang):
-            rejection_message = get_rejection_response(lang)
-            await update.message.reply_text(
-                rejection_message,
-                reply_markup=ReplyKeyboardMarkup(MENU_BTNS[lang], resize_keyboard=True, one_time_keyboard=False)
-            )
-            return
+        if user_gender:
+            try:
+                is_homosexual = await is_homosexual_question_ai(user_question, user_gender, lang)
+                if is_homosexual:
+                    rejection_message = get_rejection_response(lang)
+                    await update.message.reply_text(
+                        rejection_message,
+                        reply_markup=ReplyKeyboardMarkup(MENU_BTNS[lang], resize_keyboard=True, one_time_keyboard=False)
+                    )
+                    return
+            except Exception as e:
+                logger.error(f"Error in AI homosexuality detection: {e}")
+                # Continue to normal processing if AI detection fails
         
         try:
             # Save user message and get chat history concurrently
