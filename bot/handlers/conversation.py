@@ -467,7 +467,7 @@ async def handle_question(update: Update, context: ContextTypes.DEFAULT_TYPE):
         user_question = user_input
         
         # Check if question is about homosexuality and reject if so
-        should_reject, rejection_message = should_reject_question(user_question, lang)
+        should_reject, rejection_message = should_reject_question(user_question, lang, session.gender)
         if should_reject:
             await update.message.reply_text(
                 rejection_message,

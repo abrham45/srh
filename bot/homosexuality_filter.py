@@ -50,13 +50,14 @@ HOMOSEXUALITY_PATTERNS = {
     ]
 }
 
-def detect_homosexuality_question(text: str, language: str = 'en') -> Tuple[bool, str]:
+def detect_homosexuality_question(text: str, language: str = 'en', user_gender: str = None) -> Tuple[bool, str]:
     """
     Detect if a question is about homosexuality.
     
     Args:
         text: User input text
         language: Language of the text ('en' or 'am')
+        user_gender: User's gender ('M' for Male, 'F' for Female)
     
     Returns:
         Tuple of (is_homosexuality_question, detection_reason)
@@ -79,6 +80,92 @@ def detect_homosexuality_question(text: str, language: str = 'en') -> Tuple[bool
         if re.search(pattern, text, re.IGNORECASE):
             logger.info(f"Homosexuality pattern detected: '{pattern}' in text")
             return True, f"pattern: {pattern}"
+    
+    # Gender-aware detection
+    if user_gender:
+        is_homosexual, reason = detect_same_gender_attraction(text, language, user_gender)
+        if is_homosexual:
+            return True, reason
+    
+    return False, ""
+
+def detect_same_gender_attraction(text: str, language: str, user_gender: str) -> Tuple[bool, str]:
+    """
+    Detect same-gender attraction based on user's gender and their statements.
+    
+    Args:
+        text: User input text
+        language: Language of the text
+        user_gender: User's gender ('M' for Male, 'F' for Female)
+    
+    Returns:
+        Tuple of (is_same_gender_attraction, detection_reason)
+    """
+    text_lower = text.lower()
+    
+    if language == 'en':
+        if user_gender == 'M':  # Male user
+            # Male expressing attraction/activity with males
+            male_patterns = [
+                r'\bi\s+(want|like|love|am\s+attracted\s+to)\s+.*\b(men|man|male|boy|boys|guy|guys)\b',
+                r'\bhave\s+sex\s+with\s+(men|man|male|boy|boys|guy|guys)\b',
+                r'\bsex\s+with\s+(men|man|male|boy|boys|guy|guys)\b',
+                r'\b(date|dating|kiss|kissing)\s+(men|man|male|boy|boys|guy|guys)\b',
+                r'\b(attracted|attraction)\s+to\s+(men|man|male|boy|boys|guy|guys)\b',
+                r'\bmy\s+(boyfriend|partner)\s+is\s+(male|man|boy)\b'
+            ]
+            for pattern in male_patterns:
+                if re.search(pattern, text_lower):
+                    logger.info(f"Male-male attraction detected: '{pattern}' in text")
+                    return True, f"male_attraction: {pattern}"
+                    
+        elif user_gender == 'F':  # Female user
+            # Female expressing attraction/activity with females
+            female_patterns = [
+                r'\bi\s+(want|like|love|am\s+attracted\s+to)\s+.*\b(women|woman|female|girl|girls|lady|ladies)\b',
+                r'\bhave\s+sex\s+with\s+(women|woman|female|girl|girls|lady|ladies)\b',
+                r'\bsex\s+with\s+(women|woman|female|girl|girls|lady|ladies)\b',
+                r'\b(date|dating|kiss|kissing)\s+(women|woman|female|girl|girls|lady|ladies)\b',
+                r'\b(attracted|attraction)\s+to\s+(women|woman|female|girl|girls|lady|ladies)\b',
+                r'\bmy\s+(girlfriend|partner)\s+is\s+(female|woman|girl)\b'
+            ]
+            for pattern in female_patterns:
+                if re.search(pattern, text_lower):
+                    logger.info(f"Female-female attraction detected: '{pattern}' in text")
+                    return True, f"female_attraction: {pattern}"
+    
+    elif language == 'am':
+        if user_gender == 'M':  # Male user
+            # Male expressing attraction/activity with males in Amharic
+            male_patterns_am = [
+                r'\bወንድ\s+.*\s+(መውደድ|ፍቅር|ወሲብ)\b',
+                r'\bወንዶች\s+.*\s+(መውደድ|ፍቅር|ወሲብ)\b',
+                r'\bከ\s*ወንድ\s+ጋር\s+(ወሲብ|ፍቅር|ግንኙነት)\b',
+                r'\bወንድ\s+ከ\s*ወንድ\s+ጋር\b',
+                r'\bእኔ\s+.*\s+ወንድ\s+.*\s+(እወዳለሁ|እፈልጋለሁ)\b',
+                r'\bወንድ\s+(እወዳለሁ|እፈልጋለሁ|መውደድ)\b',
+                r'\bወንዶች\s+(እወዳለሁ|እፈልጋለሁ|መውደድ)\b'
+            ]
+            for pattern in male_patterns_am:
+                if re.search(pattern, text_lower):
+                    logger.info(f"Male-male attraction detected (Amharic): '{pattern}' in text")
+                    return True, f"male_attraction_am: {pattern}"
+                    
+        elif user_gender == 'F':  # Female user
+            # Female expressing attraction/activity with females in Amharic
+            female_patterns_am = [
+                r'\bሴት\s+.*\s+(መውደድ|ፍቅር|ወሲብ)\b',
+                r'\bሴቶች\s+.*\s+(መውደድ|ፍቅር|ወሲብ)\b',
+                r'\bከ\s*ሴት\s+ጋር\s+(ወሲብ|ፍቅር|ግንኙነት)\b',
+                r'\bሴት\s+ከ\s*ሴት\s+ጋር\b',
+                r'\bእኔ\s+.*\s+ሴት\s+.*\s+(እወዳለሁ|እፈልጋለሁ)\b',
+                r'\bሴት\s+(እወዳለሁ|እፈልጋለሁ|መውደድ)\b',
+                r'\bሴቶች\s+(እወዳለሁ|እፈልጋለሁ|መውደድ)\b'
+            ]
+            for pattern in female_patterns_am:
+                if re.search(pattern, text_lower):
+                    logger.info(f"Female-female attraction detected (Amharic): '{pattern}' in text")
+                    return True, f"female_attraction_am: {pattern}"
     
     return False, ""
 
@@ -111,18 +198,19 @@ def get_homosexuality_rejection_response(language: str = 'en') -> str:
     
     return responses.get(language, responses['en'])
 
-def should_reject_question(text: str, language: str = 'en') -> Tuple[bool, str]:
+def should_reject_question(text: str, language: str = 'en', user_gender: str = None) -> Tuple[bool, str]:
     """
     Main function to check if a question should be rejected due to homosexuality content.
     
     Args:
         text: User input text
         language: Language of the text
+        user_gender: User's gender ('M' for Male, 'F' for Female)
     
     Returns:
         Tuple of (should_reject, rejection_message)
     """
-    is_homosexuality, reason = detect_homosexuality_question(text, language)
+    is_homosexuality, reason = detect_homosexuality_question(text, language, user_gender)
     
     if is_homosexuality:
         rejection_message = get_homosexuality_rejection_response(language)
