@@ -12,7 +12,7 @@ from bot.intent_classification import perform_intent_classification
 from bot.emotion_detection import perform_emotion_detection
 from bot.risk_assessment import perform_risk_assessment
 from bot.myth_detection import perform_myth_detection
-from bot.homosexuality_filter import should_reject_question
+from bot.homosexuality_filter import is_homosexual_question, get_rejection_response
 
 logger = logging.getLogger(__name__)
 
@@ -468,9 +468,8 @@ async def handle_question(update: Update, context: ContextTypes.DEFAULT_TYPE):
         
         # Check if question is about homosexuality and reject if so
         user_gender = getattr(session, 'gender', None)
-        logger.info(f"User gender for homosexuality check: {user_gender}")
-        should_reject, rejection_message = should_reject_question(user_question, lang, user_gender)
-        if should_reject:
+        if user_gender and is_homosexual_question(user_question, user_gender, lang):
+            rejection_message = get_rejection_response(lang)
             await update.message.reply_text(
                 rejection_message,
                 reply_markup=ReplyKeyboardMarkup(MENU_BTNS[lang], resize_keyboard=True, one_time_keyboard=False)
@@ -521,8 +520,8 @@ async def handle_question(update: Update, context: ContextTypes.DEFAULT_TYPE):
             }
             
             ethiopian_context = {
-                'en': "⚠️ ETHIOPIAN CONTEXT: You are operating in Ethiopia. Consider Ethiopian culture, healthcare system (health posts, health centers, hospitals), and conservative values. Recommend local Ethiopian health facilities when professional help is needed. For questions about homosexuality, respect Ethiopian conservative cultural and religious values without promoting such behaviors.",
-                'am': "⚠️ የኢትዮጵያ አውድ: እርስዎ በኢትዮጵያ ውስጥ እየሰሩ ነዎት። የኢትዮጵያን ባህል፣ የጤና ሲስተም (ጤና ጣቢያዎች፣ ጤና ኬላዎች፣ ሆስፒታሎች)፣ እና ወግ አጥባቂ እሴቶችን ግምት ውስጥ ያስገቡ። የፕሮፌሽናል እርዳታ ሲያስፈልግ የኢትዮጵያ የጤና ተቋማትን ይምከሩ። ስለ ግብረ-ሰዶማዊነት ጥያቄዎች ላይ የኢትዮጵያን ወግ አጥባቂ ባህላዊ እና ሃይማኖታዊ እሴቶችን ያከብሩ።"
+                'en': "⚠️ ETHIOPIAN CONTEXT: You are operating in Ethiopia. Consider Ethiopian culture, healthcare system (health posts, health centers, hospitals), and conservative values. Recommend local Ethiopian health facilities when professional help is needed.",
+                'am': "⚠️ የኢትዮጵያ አውድ: እርስዎ በኢትዮጵያ ውስጥ እየሰሩ ነዎት። የኢትዮጵያን ባህል፣ የጤና ሲስተም (ጤና ጣቢያዎች፣ ጤና ኬላዎች፣ ሆስፒታሎች)፣ እና ወግ አጥባቂ እሴቶችን ግምት ውስጥ ያስገቡ። የፕሮፌሽናል እርዳታ ሲያስፈልግ የኢትዮጵያ የጤና ተቋማትን ይምከሩ።"
             }
                 
             prompt = (
