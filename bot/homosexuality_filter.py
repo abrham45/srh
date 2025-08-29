@@ -43,7 +43,8 @@ def is_homosexual_question(text: str, user_gender: str, language: str = 'en') ->
             male_patterns = [
                 r'\bi\s+(want|love|like|am\s+attracted\s+to)\s+(a\s+)?(man|men|male|boy|guy)',
                 r'\bi\s+(want\s+to\s+)?have\s+sex\s+with\s+(a\s+)?(man|men|male|boy|guy)',
-                r'\bi\s+(want\s+to\s+)?date\s+(a\s+)?(man|men|male|boy|guy)'
+                r'\bi\s+(want\s+to\s+)?date\s+(a\s+)?(man|men|male|boy|guy)',
+                r'\bi\s+(want\s+to\s+)?have\s+(male|man|men)\s+(sex|intercourse)'
             ]
             for pattern in male_patterns:
                 if re.search(pattern, text_lower):
@@ -53,7 +54,8 @@ def is_homosexual_question(text: str, user_gender: str, language: str = 'en') ->
             female_patterns = [
                 r'\bi\s+(want|love|like|am\s+attracted\s+to)\s+(a\s+)?(woman|women|female|girl|lady)',
                 r'\bi\s+(want\s+to\s+)?have\s+sex\s+with\s+(a\s+)?(woman|women|female|girl|lady)',
-                r'\bi\s+(want\s+to\s+)?date\s+(a\s+)?(woman|women|female|girl|lady)'
+                r'\bi\s+(want\s+to\s+)?date\s+(a\s+)?(woman|women|female|girl|lady)',
+                r'\bi\s+(want\s+to\s+)?have\s+(female|woman|women)\s+(sex|intercourse)'
             ]
             for pattern in female_patterns:
                 if re.search(pattern, text_lower):
