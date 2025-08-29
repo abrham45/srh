@@ -86,6 +86,56 @@ def detect_homosexuality_question(text: str, language: str = 'en', user_gender: 
         is_homosexual, reason = detect_same_gender_attraction(text, language, user_gender)
         if is_homosexual:
             return True, reason
+    else:
+        # Fallback: detect general same-gender expressions when gender is unknown
+        logger.warning(f"No user gender available for homosexuality detection, using fallback patterns")
+        is_homosexual, reason = detect_general_same_gender_expressions(text, language)
+        if is_homosexual:
+            return True, reason
+    
+    return False, ""
+
+def detect_general_same_gender_expressions(text: str, language: str) -> Tuple[bool, str]:
+    """
+    Fallback detection for same-gender expressions when user gender is unknown.
+    Uses more general patterns that don't require gender context.
+    """
+    text_lower = text.lower()
+    
+    if language == 'en':
+        # General same-gender patterns (more cautious)
+        fallback_patterns = [
+            r'\b(man|men)\s+(with|and|having\s+sex\s+with)\s+(man|men)\b',
+            r'\b(woman|women)\s+(with|and|having\s+sex\s+with)\s+(woman|women)\b',
+            r'\bsex\s+with\s+(same|another)\s+(man|woman|gender)\b',
+            r'\bhomosexual\s+(sex|activity|behavior|relationship)\b',
+            r'\bgay\s+(sex|relationship|couple|partner)\b',
+            r'\blesbian\s+(sex|relationship|couple|partner)\b',
+            # More suspicious patterns when gender is unknown
+            r'\bi\s+(want|need)\s+(to\s+)?have\s+sex\s+with\s+(man|men)\b.*\b(too|also|as\s+well)\b',
+            r'\bi\s+(want|need)\s+(to\s+)?have\s+sex\s+with\s+(woman|women)\b.*\b(too|also|as\s+well)\b',
+            r'\bsame\s+(sex|gender)\s+(attraction|desire|love|relationship)\b',
+            r'\bhomosexual\s+(desire|urge|feeling|thought)\b'
+        ]
+        
+        for pattern in fallback_patterns:
+            if re.search(pattern, text_lower):
+                logger.info(f"General same-gender pattern detected: '{pattern}' in text")
+                return True, f"fallback_pattern: {pattern}"
+    
+    elif language == 'am':
+        # Amharic fallback patterns
+        fallback_patterns_am = [
+            r'\bወንድ\s+ከ\s*ወንድ\s+ጋር\s+(ወሲብ|ግንኙነት)\b',
+            r'\bሴት\s+ከ\s*ሴት\s+ጋር\s+(ወሲብ|ግንኙነት)\b',
+            r'\bተመሳሳይ\s+ጾታ\s+(ወሲብ|ግንኙነት)\b',
+            r'\bግብረሰዶማዊ\s+(ወሲብ|ግንኙነት|ስሜት)\b'
+        ]
+        
+        for pattern in fallback_patterns_am:
+            if re.search(pattern, text_lower):
+                logger.info(f"General same-gender pattern detected (Amharic): '{pattern}' in text")
+                return True, f"fallback_pattern_am: {pattern}"
     
     return False, ""
 
