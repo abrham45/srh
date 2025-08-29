@@ -12,6 +12,7 @@ from bot.intent_classification import perform_intent_classification
 from bot.emotion_detection import perform_emotion_detection
 from bot.risk_assessment import perform_risk_assessment
 from bot.myth_detection import perform_myth_detection
+from bot.homosexuality_filter import should_reject_question
 
 logger = logging.getLogger(__name__)
 
@@ -464,6 +465,15 @@ async def handle_question(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # --- Normal Q&A flow ---
     if state == STATE_QUESTION:
         user_question = user_input
+        
+        # Check if question is about homosexuality and reject if so
+        should_reject, rejection_message = should_reject_question(user_question, lang)
+        if should_reject:
+            await update.message.reply_text(
+                rejection_message,
+                reply_markup=ReplyKeyboardMarkup(MENU_BTNS[lang], resize_keyboard=True, one_time_keyboard=False)
+            )
+            return
         
         try:
             # Save user message and get chat history concurrently
