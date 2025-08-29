@@ -23,44 +23,17 @@ async def is_homosexual_question_ai(question: str, user_gender: str, language: s
     if not question or not user_gender:
         return False
     
-    # Create classification prompt for the AI
+    # Simple prompt - just ask Gemini directly
     user_gender_text = "Male" if user_gender == 'M' else "Female"
     
-    # Determine what should be homosexual for this user
-    if user_gender == 'M':
-        homosexual_targets = "males, men, boys, guys"
-        heterosexual_targets = "females, women, girls, ladies"
-    else:
-        homosexual_targets = "females, women, girls, ladies"
-        heterosexual_targets = "males, men, boys, guys"
-    
-    # Simple classification prompt
-    if user_gender == 'M':
-        same_gender_words = ["man", "men", "male", "boy", "guy"]
-        opposite_gender_words = ["woman", "women", "female", "girl", "lady"]
-    else:
-        same_gender_words = ["woman", "women", "female", "girl", "lady"]
-        opposite_gender_words = ["man", "men", "male", "boy", "guy"]
-    
     classification_prompt = f"""
+User is {user_gender_text}.
 Question: "{question}"
-User: {user_gender_text}
 
-Is this {user_gender_text} asking for sexual/romantic attraction to their own gender?
+Is this question about homosexuality? Answer only YES or NO.
 
-Check:
-- Does question mention sex, sexual attraction, or romance?
-- Does it mention {', '.join(same_gender_words)}?
-- Is it about personal desire/attraction?
-
-If YES to all three: Answer HOMOSEXUAL
-If NO to any: Answer NOT_HOMOSEXUAL
-
-Examples:
-- "{user_gender_text} wants sex with {same_gender_words[0]}" = HOMOSEXUAL
-- "{user_gender_text} wants sex with {opposite_gender_words[0]}" = NOT_HOMOSEXUAL
-- "What is family planning?" = NOT_HOMOSEXUAL
-- "Hello" = NOT_HOMOSEXUAL
+YES = Question is about same-gender attraction, relationships, or sexual activity
+NO = Everything else (opposite-gender, health topics, general conversation, etc.)
 
 Answer:"""
 
@@ -71,8 +44,8 @@ Answer:"""
         
         logger.info(f"AI Classification - Question: '{question}' | Gender: {user_gender} | Result: {response_text}")
         
-        # Return True if AI classifies it as homosexual
-        return "HOMOSEXUAL" in response_text
+        # Return True if AI says YES
+        return "YES" in response_text
         
     except Exception as e:
         logger.error(f"Error in AI homosexuality detection: {e}")
